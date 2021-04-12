@@ -1,7 +1,7 @@
 **npm包发布流程：**
 
 1. git clone ...下载仓库
-2. npm init 初始化
+2. npm init 初始化:
 3. 构建目录结构
 
 ```
@@ -28,8 +28,6 @@ npm publish // 发布
 ```
 
 当发布成功之后如果进行修改，需要重新发布，需要将package.json中的version更改为比上一次的版本号更高。
-
-[TOC]
 
 ## is-sorted
 **（1）功能与示例**
