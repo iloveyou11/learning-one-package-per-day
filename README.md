@@ -36,15 +36,9 @@ npm publish // 发布
 ```js
 const sorted = require('is-sorted')
 
-console.log(sorted([1, 2, 3]))
-// => true
-
-console.log(sorted([3, 1, 2]))
-// => false
-
-// supports custom comparators
-console.log(sorted([3, 2, 1], function (a, b) { return b - a }))
-// => true
+console.log(sorted([1, 2, 3]))// => true
+console.log(sorted([3, 1, 2]))// => false
+console.log(sorted([3, 2, 1], function (a, b) { return b - a }))// => true
 ```
 
 **（2）代码**
@@ -54,7 +48,7 @@ module.exports = const sorted = (array, comparator) => {
   // 如果传入不是数组，则返回
   if (!Array.isArray(array)) throw new TypeError('Expected Array, got ' + (typeof array))
 
-  // 比较函数
+  // 比较函数，不传入则默认为升序
   const defaultComparator=(a, b)=> a - b
   comparator = comparator || defaultComparator
 
@@ -130,6 +124,7 @@ var slice = require('array-slice');
 // }
 
 module.exports = function arrayFirst(arr, num) {
+  // 传入不是数组则报错
   if (!Array.isArray(arr)) {
     throw new Error('array-first expects an array as the first argument.');
   }
@@ -164,6 +159,7 @@ last(['a', 'b', 'c', 'd', 'e', 'f'], 3);//=> ['d', 'e', 'f']
 var isNumber = require('is-number'); // is-number的函数在上面已经展示了
 
 module.exports = function last(arr, n) {
+  // 传入不是数组则报错
   if (!Array.isArray(arr)) {
     throw new Error('expected the first argument to be an array');
   }
@@ -209,6 +205,7 @@ function flat(arr, res) {
   var len = arr.length;
   for (; i < len; i++) {
     cur = arr[i];
+    // 这里采用递归形式
     Array.isArray(cur) ? flat(cur, res) : res.push(cur);
   }
   return res;
@@ -493,10 +490,15 @@ module.exports = function (item, n) {
 	var ret = new Array(n);
 	var isFn = typeof item === 'function';
 
+  // 如果传入的不是函数，是个固定值，那么直接使用fill函数填充数组
 	if (!isFn && typeof ret.fill === 'function') {
 		return ret.fill(item);
 	}
 
+  // 如果没有fill函数，则依次遍历填充数组
+  // 这里考虑传入的形式：
+  // 1. 函数
+  // 2. 固定值
 	for (var i = 0; i < n; i++) {
 		ret[i] = isFn ? item(i, n, ret) : item;
 	}
