@@ -1143,3 +1143,108 @@ function toTitleCase(string) {
 }
 module.exports = toTitleCase
 ```
+
+## node-slug
+**（1）功能与示例**
+
+字符解析
+
+```js
+var slug = require('slug')
+var print = console.log.bind(console, '>')
+
+print(slug('i ♥ unicode'))
+// > i-love-unicode
+
+print(slug('unicode ♥ is ☢')) // yes!
+// > unicode-love-is-radioactive
+
+print(slug('i ♥ unicode', '_')) // If you prefer something else then `-` as seperator
+// > i_love_unicode
+
+slug.charmap['♥'] = 'freaking love' // change default charmap or use option {charmap:{…}} as 2. argument
+print(slug('I ♥ UNICODE'))
+// > I-freaking-love-UNICODE
+
+print(slug('☏-Number', {lower: true})) // If you prefer lower case
+// > telephone-number
+
+print(slug('i <3 unicode'))
+// > i-love-unicode
+```
+
+**（2）代码**
+
+[代码](https://github.com/dodo/node-slug/blob/master/slug.js)
+
+## rtrim
+**（1）功能与示例**
+
+字符串右侧trim操作（可以是空格、字母、字符串、特殊字符等）
+
+```js
+var rtrim = require('rtrim');
+
+rtrim('    Hello    ') + ' World' // →    Hello World
+rtrim('... Hello World ...', ' .'); // →... Hello World
+rtrim('Hello World', 'Hdle'); // →Hello Wor
+rtrim('https://goo.gl/', '/'); // →https://goo.gl
+```
+
+**（2）代码**
+
+```js
+module.exports = function (str, chars) {
+  str = str.toString();
+
+  // 空字符串
+  if (!str) {
+    return '';
+  }
+
+  // 不传第二个参数时，默认去除右侧的全部空格
+  if (!chars) {
+    return str.replace(/\s+$/, '');
+  }
+
+  chars = chars.toString();
+
+  const letters = str.split('');
+
+  for (let i = letters.length - 1; i >= 0; i--) {
+    if (chars.indexOf(letters[i]) === -1) {
+      return str.substring(0, i + 1);
+    }
+  }
+  return str;
+};
+```
+
+## slice.js
+**（1）功能与示例**
+
+实现类似于python的切片函数
+
+```js
+const arr = slice([1, '2', 3, '4', 5, '6', 7, '8', 9, '0']);
+
+arr[-2];  		// 9
+arr['2:5'];  		// [3, '4', 5]
+arr[':-2'];  		// [1, '2', 3, '4', 5, '6', 7, '8']
+arr['-2:'];  		// [9, '0']
+arr['1:5:2'];  		// ['2', '4']
+arr['5:1:-2'];  	// ['6', '4']
+
+const str = slice('1234567890');
+
+str[-2];  		// '9'
+str['2:5'];  		// '345'
+str[':-2'];  		// '12345678'
+str['-2:'];  		// '90'
+str['1:5:2'];  		// '24'
+str['5:1:-2'];  	// '64'
+```
+
+**（2）代码**
+
+[代码](https://github.com/hustcc/slice.js/blob/master/src/index.js)
