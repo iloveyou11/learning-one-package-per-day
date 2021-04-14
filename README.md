@@ -760,3 +760,384 @@ groupArray(arr, 'tag');
 **（2）代码**
 
 [代码](https://github.com/doowb/group-array/blob/master/index.js)
+
+## decamelize
+**（1）功能与示例**
+
+将驼峰转为下划线
+
+```js
+const decamelize = require('decamelize');
+
+decamelize('unicornRainbow'); //=> 'unicorn_rainbow'
+decamelize('unicornRainbow', {separator: '-'}); //=> 'unicorn-rainbow'
+decamelize('testGUILabel', {preserveConsecutiveUppercase: true}); //=> 'test_GUI_label'
+decamelize('testGUILabel', {preserveConsecutiveUppercase: false}); //=> 'test_gui_label'
+```
+
+**（2）代码**
+
+[代码](https://github.com/sindresorhus/decamelize/blob/main/index.js)
+## pad-left
+**（1）功能与示例**
+
+左侧补0
+
+```js
+var pad = require('pad-left');
+pad(  '4', 4, '0') // 0004
+pad( '35', 4, '0') // 0035
+pad('459', 4, '0') // 0459
+```
+
+**（2）代码**
+
+```js
+'use strict';
+
+var repeat = require('repeat-string');
+
+module.exports = function padLeft(str, num, ch) {
+  str = str.toString();
+
+  if (typeof num === 'undefined') {
+    return str;
+  }
+
+  if (ch === 0) {
+    ch = '0';
+  } else if (ch) {
+    ch = ch.toString();
+  } else {
+    ch = ' ';
+  }
+
+  // 1. 将str的其他位补齐
+  // 2. 加上原始str后返回
+  return repeat(ch, num - str.length) + str;
+};
+```
+
+## to-camel-case
+**（1）功能与示例**
+
+其他形式（下划线、点、括号、空格等）转驼峰
+
+```js
+var toCamelCase = require('to-camel-case')
+
+toCamelCase('space case')  // "spaceCase"
+toCamelCase('snake_case')  // "snakeCase"
+toCamelCase('dot.case')    // "dotCase"
+toCamelCase('weird[case')  // "weirdCase"
+```
+
+**（2）代码**
+
+```js
+var space = require('to-space-case') // 将字符串变为空格分隔形式（如下划线、点等）
+
+// var clean = require('to-no-case')
+// function toSpaceCase(string) {
+//   return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
+//     return match ? ' ' + match : ''
+//   }).trim()
+// }
+// module.exports = toSpaceCase
+
+function toCamelCase(string) {
+  // 正则匹配字符串的空格，将空格后的字母变为大写
+  return space(string).replace(/\s(\w)/g, function (matches, letter) {
+    return letter.toUpperCase()
+  })
+}
+module.exports = toCamelCase
+```
+
+## to-capital-case
+**（1）功能与示例**
+
+字符串改为大写单词开头的形式
+
+```js
+var toCapitalCase = require('to-capital-case')
+
+toCapitalCase('camelCase')        // "Camel Case"
+toCapitalCase('space case')       // "Space Case"
+toCapitalCase('snake_case')       // "Snake Case"
+toCapitalCase('dot.case')         // "Dot Case"
+toCapitalCase('some*weird[case')  // "Some Weird Case"
+```
+
+**（2）代码**
+
+```js
+var space = require('to-space-case')
+
+// toCapitalCase('camelCase')        // "Camel Case"
+function toCapitalCase(string) {
+  return space(string).replace(/(^|\s)(\w)/g, function (matches, previous, letter) {
+    return previous + letter.toUpperCase()
+  })
+}
+```
+
+## to-constant-case
+**（1）功能与示例**
+
+变成下划线连接全部大写的常量形式
+
+```js
+var toConstantCase = require('to-constant-case')
+
+toConstantCase('camelCase')   // "CAMEL_CASE"
+toConstantCase('snake_case')  // "SNAKE_CASE"
+toConstantCase('dot.case')    // "DOT_CASE"
+toConstantCase('weird[case')  // "WEIRD_CASE"
+```
+
+**（2）代码**
+
+```js
+var snake = require('to-snake-case') // 转为下划线连接的形式
+
+// var toSpace = require('to-space-case')
+// module.exports = toSnakeCase
+// function toSnakeCase(string) {
+//   return toSpace(string).replace(/\s/g, '_')
+// }
+
+function toConstantCase(string) {
+  return snake(string).toUpperCase()
+}
+module.exports = toConstantCase
+```
+
+## to-dot-case
+**（1）功能与示例**
+
+```js
+var toDotCase = require('to-dot-case')
+
+toDotCase("snake_case")  // "snake.case"
+toDotCase('camelCase')   // "camel.case"
+toDotCase('space case')  // "space.case"
+toDotCase('slug-case')   // "slug.case"
+toDotCase("PascalCase")  // "pascal.case"
+toDotCase('weird[case')  // "weird.case"
+```
+
+**（2）代码**
+
+```js
+var space = require('to-space-case') // 转化为空格分隔的形式
+
+// var clean = require('to-no-case')
+// function toSpaceCase(string) {
+//   return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
+//     return match ? ' ' + match : ''
+//   }).trim()
+// }
+// module.exports = toSpaceCase
+
+function toDotCase(string) {
+  return space(string).replace(/\s/g, '.')
+}
+module.exports = toDotCase
+```
+
+## to-no-case
+**（1）功能与示例**
+
+去除全部case，转化为纯小写、空格分隔的形式
+
+```js
+var toNoCase = require('to-no-case')
+
+toNoCase('camelCase')            // "camel case"
+toNoCase('snake_case')           // "snake case"
+toNoCase('slug-case')            // "slug case"
+toNoCase('Title of Case')        // "title of case"
+toNoCase('Sentence case.')       // "sentence case."
+toNoCase('RAnDom -jUNk$__loL!')  // "random -junk$__lol!"
+```
+
+**（2）代码**
+
+```js
+var hasSpace = /\s/ // 是否有空格
+var hasSeparator = /(_|-|\.|:)/ // 是否有分隔符（下划线_、中连接线-、点.、冒号:）
+var hasCamel = /([a-z][A-Z]|[A-Z][a-z])/ // 是否存在驼峰形式（Ab、aB等）
+
+function toNoCase(string) {
+  // 如果含义空格，则直接转化为小写
+  if (hasSpace.test(string)) return string.toLowerCase()
+
+  // 如果含有分隔符，则反分隔符，转化为小写
+  if (hasSeparator.test(string)) return (unseparate(string) || string).toLowerCase()
+
+  // 如果含有驼峰形式，则反驼峰，转化为小写
+  if (hasCamel.test(string)) return uncamelize(string).toLowerCase()
+
+  // 否则，直接转化为小写
+  return string.toLowerCase()
+}
+
+// 反分隔符——将分隔符转化为空格
+function unseparate(string) {
+  const separatorSplitter = /[\W_]+(.|$)/g
+  return string.replace(separatorSplitter, function (m, next) {
+    return next ? ' ' + next : ''
+  })
+}
+
+// 反驼峰——将大写全部转化为小写
+function uncamelize(string) {
+  const camelSplitter = /(.)([A-Z]+)/g
+  return string.replace(camelSplitter, function (m, previous, uppers) {
+    return previous + ' ' + uppers.toLowerCase().split('').join(' ')
+  })
+}
+
+module.exports = toNoCase
+```
+
+## to-pascal-case
+**（1）功能与示例**
+
+每个单词首字母大写，无任何分隔符
+
+```js
+var toPascalCase = require('to-pascal-case')
+
+toPascalCase('space case')  // "SpaceCase"
+toPascalCase('snake_case')  // "SnakeCase"
+toPascalCase('dot.case')    // "DotCase"
+toPascalCase('weird[case')  // "WeirdCase"
+```
+
+**（2）代码**
+
+```js
+var space = require('to-space-case') // 将字符串转化为空格分隔的形式
+
+function toPascalCase(string) {
+  // 删除空格，并将后面紧接的字母转化为大写形式
+  return space(string).replace(/(?:^|\s)(\w)/g, function (matches, letter) {
+    return letter.toUpperCase()
+  })
+}
+module.exports = toPascalCase
+```
+
+## to-sentence-case
+**（1）功能与示例**
+
+将句子的首字母大写
+
+```js
+var toSentenceCase = require('to-sentence-case')
+toSentenceCase('the catcher, in the rye.')  // "The catcher, in the rye."
+```
+
+**（2）代码**
+
+```js
+var clean = require('to-no-case') // 转化为无任何case的形式，全部小写，空格分隔
+
+function toSentenceCase(string) {
+  // 将第一个字母变为大写，注意这里不是/g全局匹配了，所以只会匹配到第一个字母
+  return clean(string).replace(/[a-z]/i, function (letter) {
+    return letter.toUpperCase()
+  }).trim()
+}
+
+module.exports = toSentenceCase
+```
+
+## to-snake-case
+**（1）功能与示例**
+
+转化为下划线分隔的形式
+
+```js
+var toSnakeCase = require('to-snake-case')
+
+toSnakeCase('camelCase')   // "camel_case"
+toSnakeCase('space case')  // "space_case"
+toSnakeCase('dot.case')    // "dot_case"
+toSnakeCase('weird[case')  // "weird_case"
+```
+
+**（2）代码**
+
+```js
+var toSpace = require('to-space-case') // 转化为空格分隔的形式
+
+function toSnakeCase(string) {
+  // 将空格全部转化为下划线
+  return toSpace(string).replace(/\s/g, '_')
+}
+module.exports = toSnakeCase
+```
+
+## to-space-case
+**（1）功能与示例**
+
+将其他case形式转化为空格space分隔的形式
+
+```js
+var toSpaceCase = require('to-space-case')
+
+toSpaceCase('camelCase')             // "camel case"
+toSpaceCase('snake_case')            // "snake case"
+toSpaceCase('dot.case')              // "dot case"
+toSpaceCase('-RAnDom -jUNk$__loL!')  // "random junk lol"
+```
+
+**（2）代码**
+
+```js
+var clean = require('to-no-case')
+
+function toSpaceCase(string) {
+  return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
+    return match ? ' ' + match : ''
+  }).trim()
+}
+module.exports = toSpaceCase
+```
+
+## to-title-case
+**（1）功能与示例**
+
+```js
+var toTitleCase = require('to-title-case')
+toTitleCase('the catcher in the rye')  // "The Catcher in the Rye"
+```
+
+**（2）代码**
+
+```js
+var sentence = require('to-sentence-case')
+var escape = require('escape-regexp-component')
+var minors = require('title-case-minors')
+
+var escaped = minors.map(escape)
+var minorMatcher = new RegExp('[^^]\\b(' + escaped.join('|') + ')\\b', 'ig')
+var punctuationMatcher = /:\s*(\w)/g
+
+function toTitleCase(string) {
+  return sentence(string)
+    .replace(/(^|\s)(\w)/g, function (matches, previous, letter) {
+      return previous + letter.toUpperCase()
+    })
+    .replace(minorMatcher, function (minor) {
+      return minor.toLowerCase()
+    })
+    .replace(punctuationMatcher, function (letter) {
+      return letter.toUpperCase()
+    })
+}
+module.exports = toTitleCase
+```
