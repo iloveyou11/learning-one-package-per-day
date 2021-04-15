@@ -1248,3 +1248,186 @@ str['5:1:-2'];  	// '64'
 **（2）代码**
 
 [代码](https://github.com/hustcc/slice.js/blob/master/src/index.js)
+
+---
+
+关于时间类的库，推荐看[dayjs](https://github.com/iamkun/dayjs/)、[moment](https://github.com/moment/moment)
+## pretty-ms
+**（1）功能与示例**
+
+1. 支持将时间戳转化为天、小时、分钟、秒、毫秒等格式
+2. 支持计算时间范围，如 new Date(2014, 0, 1, 10, 40) - new Date(2014, 0, 1, 10, 5)
+3. 自定义option
+- compact
+- verbose 单位全称展示
+- colonNotation 时钟表示法
+- formatSubMilliseconds 支持毫秒以下的表示
+
+```js
+const prettyMilliseconds = require('pretty-ms');
+
+prettyMilliseconds(1337000000);
+//=> '15d 11h 23m 20s'
+
+prettyMilliseconds(1337);
+//=> '1.3s'
+
+prettyMilliseconds(133);
+//=> '133ms'
+
+// `compact` option
+prettyMilliseconds(1337, {compact: true});
+//=> '1s'
+
+// `verbose` option
+prettyMilliseconds(1335669000, {verbose: true});
+//=> '15 days 11 hours 1 minute 9 seconds'
+
+// `colonNotation` option
+prettyMilliseconds(95500, {colonNotation: true});
+//=> '1:35.5'
+
+// `formatSubMilliseconds` option
+prettyMilliseconds(100.400080, {formatSubMilliseconds: true})
+//=> '100ms 400µs 80ns'
+
+// Can be useful for time durations
+prettyMilliseconds(new Date(2014, 0, 1, 10, 40) - new Date(2014, 0, 1, 10, 5))
+//=> '35m'
+```
+
+**（2）代码**
+
+```js
+const parseMilliseconds = require('parse-ms');
+
+// 负数形式展示，如果数量大于1，则单词尾添加s
+const pluralize = (word, count) => count === 1 ? word : `${word}s`;
+
+const SECOND_ROUNDING_EPSILON = 0.0000001;
+
+module.exports = (milliseconds, options = {}) => {
+  // 传入的值是无穷大，则直接抛错
+	if (!Number.isFinite(milliseconds)) {
+		throw new TypeError('Expected a finite number');
+	}
+
+  // 时钟表示法，如'1:35.5'
+	if (options.colonNotation) {
+		options.compact = false;
+		options.formatSubMilliseconds = false;
+		options.separateMilliseconds = false;
+		options.verbose = false;
+	}
+
+  // 整数表示法
+	if (options.compact) {
+		options.secondsDecimalDigits = 0;
+		options.millisecondsDecimalDigits = 0;
+	}
+
+	const result = [];
+
+  // 保留几位小数
+	const floorDecimals = (value, decimalDigits) => {
+		const flooredInterimValue = Math.floor((value * (10 ** decimalDigits)) + SECOND_ROUNDING_EPSILON);
+		const flooredValue = Math.round(flooredInterimValue) / (10 ** decimalDigits);
+		return flooredValue.toFixed(decimalDigits);
+	};
+
+	const add = (value, long, short, valueString) => {
+		if ((result.length === 0 || !options.colonNotation) && value === 0 && !(options.colonNotation && short === 'm')) {
+			return;
+		}
+
+		valueString = (valueString || value || '0').toString();
+		let prefix;
+		let suffix;
+
+    // 时钟表示法
+		if (options.colonNotation) {
+			prefix = result.length > 0 ? ':' : '';
+			suffix = '';
+			const wholeDigits = valueString.includes('.') ? valueString.split('.')[0].length : valueString.length;
+			const minLength = result.length > 0 ? 2 : 1;
+			valueString = '0'.repeat(Math.max(0, minLength - wholeDigits)) + valueString;
+		} else {
+			prefix = '';
+			suffix = options.verbose ? ' ' + pluralize(long, value) : short;
+		}
+
+		result.push(prefix + valueString + suffix);
+	};
+
+	const parsed = parseMilliseconds(milliseconds);
+
+	add(Math.trunc(parsed.days / 365), 'year', 'y');
+	add(parsed.days % 365, 'day', 'd');
+	add(parsed.hours, 'hour', 'h');
+	add(parsed.minutes, 'minute', 'm');
+
+	if (
+		options.separateMilliseconds ||
+		options.formatSubMilliseconds ||
+		(!options.colonNotation && milliseconds < 1000)
+	) {
+		add(parsed.seconds, 'second', 's');
+		if (options.formatSubMilliseconds) {
+			add(parsed.milliseconds, 'millisecond', 'ms');
+			add(parsed.microseconds, 'microsecond', 'µs');
+			add(parsed.nanoseconds, 'nanosecond', 'ns');
+		} else {
+			const millisecondsAndBelow =
+				parsed.milliseconds +
+				(parsed.microseconds / 1000) +
+				(parsed.nanoseconds / 1e6);
+
+			const millisecondsDecimalDigits =
+				typeof options.millisecondsDecimalDigits === 'number' ?
+					options.millisecondsDecimalDigits :
+					0;
+
+			const roundedMiliseconds = millisecondsAndBelow >= 1 ?
+				Math.round(millisecondsAndBelow) :
+				Math.ceil(millisecondsAndBelow);
+
+			const millisecondsString = millisecondsDecimalDigits ?
+				millisecondsAndBelow.toFixed(millisecondsDecimalDigits) :
+				roundedMiliseconds;
+
+			add(
+				Number.parseFloat(millisecondsString, 10),
+				'millisecond',
+				'ms',
+				millisecondsString
+			);
+		}
+	} else {
+		const seconds = (milliseconds / 1000) % 60;
+		const secondsDecimalDigits =
+			typeof options.secondsDecimalDigits === 'number' ?
+				options.secondsDecimalDigits :
+				1;
+		const secondsFixed = floorDecimals(seconds, secondsDecimalDigits);
+		const secondsString = options.keepDecimalsOnWholeSeconds ?
+			secondsFixed :
+			secondsFixed.replace(/\.0+$/, '');
+		add(Number.parseFloat(secondsString, 10), 'second', 's', secondsString);
+	}
+
+	if (result.length === 0) {
+		return '0' + (options.verbose ? ' milliseconds' : 'ms');
+	}
+
+	if (options.compact) {
+		return result[0];
+	}
+
+	if (typeof options.unitCount === 'number') {
+		const separator = options.colonNotation ? '' : ' ';
+		return result.slice(0, Math.max(options.unitCount, 1)).join(separator);
+	}
+
+	return options.colonNotation ? result.join('') : result.join(' ');
+};
+```
