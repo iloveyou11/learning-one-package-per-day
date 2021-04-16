@@ -29,6 +29,46 @@ npm publish // 发布
 
 当发布成功之后如果进行修改，需要重新发布，需要将package.json中的version更改为比上一次的版本号更高。
 
+---
+
+首先补充一下位运算符的妙用，以下代码可能会涉及：
+
+1. 使用`&`运算符判断一个数的奇偶
+
+```js
+// 偶数 & 1 = 0
+// 奇数 & 1 = 1
+console.log(2 & 1)    // 0
+console.log(3 & 1)    // 1
+```
+
+2. 使用`~~n, n>>0, n<<0, n>>>0, n|0`来取整
+
+```js
+console.log(~~ 6.83)    // 6
+console.log(6.83 >> 0)  // 6
+console.log(6.83 << 0)  // 6
+console.log(6.83 | 0)   // 6
+console.log(6.83 >>> 0)   // 6 但是 >>>不可对负数取整
+```
+
+3. 使用`^`来完成值交换
+
+```js
+var a = 5
+var b = 8
+a ^= b
+b ^= a
+a ^= b
+console.log(a)   // 8
+console.log(b)   // 5
+
+// 不过现在可能直接使用ES6提供的交换能力
+// [a,b]=[b,a] 即可完成a和b的交换
+```
+
+---
+
 ## is-sorted
 **（1）功能与示例**
 判断数组是否已经排好序，排序函数可以自定义（如不定义，默认是升序排序）
@@ -129,11 +169,15 @@ module.exports = function arrayFirst(arr, num) {
     throw new Error('array-first expects an array as the first argument.');
   }
 
+  // 数组长度为0，则直接返回null
   if (arr.length === 0) {
     return null;
   }
 
+  // 在arr中取出前num的切片，注意这里为数组
   var first = slice(arr, 0, isNumber(num) ? +num : 1);
+
+  // 如果num为1或null，则返回第一个数值
   if (+num === 1 || num == null) {
     return first[0];
   }
@@ -159,21 +203,25 @@ last(['a', 'b', 'c', 'd', 'e', 'f'], 3);//=> ['d', 'e', 'f']
 var isNumber = require('is-number'); // is-number的函数在上面已经展示了
 
 module.exports = function last(arr, n) {
-  // 传入不是数组则报错
+  // 传入不是数组则抛错
   if (!Array.isArray(arr)) {
     throw new Error('expected the first argument to be an array');
   }
 
+  // 数组长度为0，直接返回null
   var len = arr.length;
   if (len === 0) {
     return null;
   }
 
   n = isNumber(n) ? +n : 1;
+
+  // 如果n为1，则返回数组最后一个值
   if (n === 1) {
     return arr[len - 1];
   }
 
+  // 取arr后n个数
   var res = new Array(n);
   while (n--) {
     res[n] = arr[--len];
@@ -267,7 +315,7 @@ const flatten = arr => {
 console.log(flatten(arr1)); //[1, 2, 3, 1, 2, 3, 4, 2, 3, 4]
 ```
 
-**方法4：**
+**方法4：使用reduce**
 
 ```js
 var arr1 = [1, 2, [3], [1, 2, 3, [4, [2, 3, 4]]]];
@@ -312,15 +360,16 @@ console.log(dedupe(aaa, value => value.a)) // [{a: 2, b: 1}, {a: 1,b: 2}]
 
 ```js
 function dedupe (arr, hash) {
-  hash = hash || JSON.stringify
+  hash = hash || JSON.stringify // 默认的去重比较函数是 JSON.stringify
 
   const clone = []
-  const map = {} // 构建一个map，存储hash过的值是否重复
+  const map = {} // 构建一个map，存储hash过的值是否重复，value为boolean
 
   for (let i = 0; i < arr.length; i++) {
       let ele = arr[i]
       let hashEle = hash(ele)
 
+      // 如果没有出现过，则放入返回数组，并增加到map设置为true（已出现过）
       if (!map[hashEle]) {
           clone.push(ele)
           map[hashEle] = true
@@ -363,8 +412,8 @@ module.exports = function newArray(start, end) {
     end = 0
   }
 
-  start = start | 0
-  end = end | 0
+  start = start | 0 // 保留整数
+  end = end | 0 // 保留整数
 
   // 保障数组长度是合法的，即end>=start
   var len = end - start
@@ -398,11 +447,11 @@ console.log(diff(a, b))
 **（2）代码**
 
 ```js
-'use strict';
-
 module.exports = function diff(arr) {
   const len = arguments.length;
   let idx = 0;
+
+  // 因为传入的可能是n个数组，因此做遍历即可
   while (++idx < len) {
     arr = diffArray(arr, arguments[idx]);
   }
@@ -420,19 +469,23 @@ function diffArray(one, two) {
   let idx = -1;
   let arr = [];
 
+  // 遍历第一个数组
   while (++idx < olen) {
     let ele = one[idx];
-
     let hasEle = false;
+
+    // 遍历第二个数组
     for (let i = 0; i < tlen; i++) {
       let val = two[i];
 
+      // 如果第二个数组中有第一个数组出现过的值ele，则设置hasEle为true
       if (ele === val) {
         hasEle = true;
         break;
       }
     }
 
+    // 如果第二个数组中没有第一个数组出现过的值ele，则表明是diff的值，放入到结果数组中
     if (hasEle === false) {
       arr.push(ele);
     }
@@ -485,7 +538,6 @@ filledArray(i => {
 **（2）代码**
 
 ```js
-'use strict';
 module.exports = function (item, n) {
 	var ret = new Array(n);
 	var isFn = typeof item === 'function';
@@ -522,8 +574,12 @@ module.exports = function (item, n) {
 **（2）代码**
 
 ```js
-'use strict';
 const map = require('map-obj');
+// map-obj的作用
+// const mapObject = require('map-obj');
+// const newObject = mapObject({foo: 'bar'}, (key, value) => [value, key]);//=> {bar: 'foo'}
+// const newObject = mapObject({FOO: true, bAr: {bAz: true}}, (key, value) => [key.toLowerCase(), value]);//=> {foo: true, bar: {bAz: true}}
+// const newObject = mapObject({FOO: true, bAr: {bAz: true}}, (key, value) => [key.toLowerCase(), value], {deep: true});//=> {foo: true, bar: {baz: true}}
 
 function mapToArray(obj, fn) {
 	let idx = 0;
@@ -552,7 +608,7 @@ console.log(inArray(null)); //=> false
 **（2）代码**
 
 ```js
-'use strict';
+
 
 module.exports = function inArray (arr, val) {
   arr = arr || [];
@@ -589,18 +645,20 @@ console.log(list) // returns ['a', 'b', 'e', 'd'] (no 'c')
 module.exports = remove
 
 function remove (arr, i) {
+  // 边界判断
   if (i >= arr.length || i < 0) return
 
   // last为数组最后一个元素
   var last = arr.pop()
 
-  // 直接把arr第i位元素替换为last即可
+  // 直接把arr第i位元素替换为last即可，并没有保证原数组的排列顺序
   if (i < arr.length) {
     var tmp = arr[i]
     arr[i] = last
     return tmp // 函数的返回值为被替换的元素
   }
   
+  // i出界的话，默认删除最后一个元素，并返回最后一个元素
   return last
 }
 ```
@@ -661,7 +719,73 @@ console.log(keymirror)
 
 **（2）代码**
 
-[代码](https://github.com/johnwquarles/mirrarray/blob/master/index.js)
+```js
+function MirrarrayError() { }
+MirrarrayError.prototype = Object.create(Error.prototype);
+
+// 工具函数
+// 数组元素类型判断——必须要是string或number
+const isValidKey = element => {
+  const isNull = element === null;
+  return ['string', 'number', 'boolean', 'undefined'].includes(typeof element) || isNull;
+}
+
+// 工具函数
+// 不能有重复的key值
+const nonOverlappingKey = element => {
+  const isNull = element === null;
+  const typeSeenBefore = keysSeen['' + element];
+  const thisType = isNull ? 'null' : typeof element;
+  if (typeSeenBefore) {
+    return typeSeenBefore === thisType;
+  } else {
+    keysSeen['' + element] = thisType;
+    return true;
+  }
+}
+
+let keysSeen;
+
+const arrayToKeyMirror = arr => {
+  keysSeen = {};
+
+  // 传入参数类型判断——如果不是数组类型，则直接报错
+  if (!Array.isArray(arr)) {
+    throw new MirrarrayError('Input to mirrarray must be an array!');
+  }
+  return arr.reduce((acc, key) => {
+    // 数组元素类型判断——必须要是string或number
+    if (!isValidKey(key)) {
+      throw new MirrarrayError('Invalid element contained within input array; each element must be either a string or number!');
+    }
+    // 不能有重复的key值
+    if (!nonOverlappingKey(key)) {
+      throw new MirrarrayError('Distinct elements in the input array are coercing to the same string!');
+    }
+
+    // 这里通过reduce每次都往初始化的{}中去赋值{key:key}
+    acc[key] = key;
+
+    // 返回acc即可
+    return acc;
+  }, {});
+};
+
+export default arrayToKeyMirror;
+```
+
+简化版（不判断边界条件，直接用reduce实现，这里非常微妙）：
+
+```js
+const arrayToKeyMirror = arr => {
+  return arr.reduce((acc, key) => {
+    acc[key] = key;
+    return acc;
+  }, {});
+};
+
+console.log(arrayToKeyMirror(['leng','hui'])) // { leng: 'leng', hui: 'hui' }
+```
 
 ## array.chunk
 **（1）功能与示例**
@@ -702,11 +826,9 @@ function isArray(arr) {
 
 module.exports = function chunks(arr, size) {
   // 错误处理
-
   if (!isArray(arr)) {
     throw new TypeError('Input should be Array or TypedArray');
   }
-
   if (typeof size !== 'number') {
     throw new TypeError('Size should be a Number');
   }
@@ -715,6 +837,7 @@ module.exports = function chunks(arr, size) {
 
   // 依次去切割数组，push到新数组中
   for (var i = 0; i < arr.length; i += size) {
+    // 这里判断是否有slice方法，没有则用subarray
     if (typeof arr.slice === 'function') {
       result.push(arr.slice(i, size + i));
     } else {
@@ -763,23 +886,8 @@ groupArray(arr, 'tag');
 
 [代码](https://github.com/doowb/group-array/blob/master/index.js)
 
-## decamelize
-**（1）功能与示例**
+---
 
-将驼峰转为下划线
-
-```js
-const decamelize = require('decamelize');
-
-decamelize('unicornRainbow'); //=> 'unicorn_rainbow'
-decamelize('unicornRainbow', {separator: '-'}); //=> 'unicorn-rainbow'
-decamelize('testGUILabel', {preserveConsecutiveUppercase: true}); //=> 'test_GUI_label'
-decamelize('testGUILabel', {preserveConsecutiveUppercase: false}); //=> 'test_gui_label'
-```
-
-**（2）代码**
-
-[代码](https://github.com/sindresorhus/decamelize/blob/main/index.js)
 ## pad-left
 **（1）功能与示例**
 
@@ -795,7 +903,7 @@ pad('459', 4, '0') // 0459
 **（2）代码**
 
 ```js
-'use strict';
+
 
 var repeat = require('repeat-string');
 
@@ -806,6 +914,7 @@ module.exports = function padLeft(str, num, ch) {
     return str;
   }
 
+  // format补齐的字符
   if (ch === 0) {
     ch = '0';
   } else if (ch) {
@@ -818,134 +927,6 @@ module.exports = function padLeft(str, num, ch) {
   // 2. 加上原始str后返回
   return repeat(ch, num - str.length) + str;
 };
-```
-
-## to-camel-case
-**（1）功能与示例**
-
-其他形式（下划线、点、括号、空格等）转驼峰
-
-```js
-var toCamelCase = require('to-camel-case')
-
-toCamelCase('space case')  // "spaceCase"
-toCamelCase('snake_case')  // "snakeCase"
-toCamelCase('dot.case')    // "dotCase"
-toCamelCase('weird[case')  // "weirdCase"
-```
-
-**（2）代码**
-
-```js
-var space = require('to-space-case') // 将字符串变为空格分隔形式（如下划线、点等）
-
-// var clean = require('to-no-case')
-// function toSpaceCase(string) {
-//   return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
-//     return match ? ' ' + match : ''
-//   }).trim()
-// }
-// module.exports = toSpaceCase
-
-function toCamelCase(string) {
-  // 正则匹配字符串的空格，将空格后的字母变为大写
-  return space(string).replace(/\s(\w)/g, function (matches, letter) {
-    return letter.toUpperCase()
-  })
-}
-module.exports = toCamelCase
-```
-
-## to-capital-case
-**（1）功能与示例**
-
-字符串改为大写单词开头的形式
-
-```js
-var toCapitalCase = require('to-capital-case')
-
-toCapitalCase('camelCase')        // "Camel Case"
-toCapitalCase('space case')       // "Space Case"
-toCapitalCase('snake_case')       // "Snake Case"
-toCapitalCase('dot.case')         // "Dot Case"
-toCapitalCase('some*weird[case')  // "Some Weird Case"
-```
-
-**（2）代码**
-
-```js
-var space = require('to-space-case')
-
-// toCapitalCase('camelCase')        // "Camel Case"
-function toCapitalCase(string) {
-  return space(string).replace(/(^|\s)(\w)/g, function (matches, previous, letter) {
-    return previous + letter.toUpperCase()
-  })
-}
-```
-
-## to-constant-case
-**（1）功能与示例**
-
-变成下划线连接全部大写的常量形式
-
-```js
-var toConstantCase = require('to-constant-case')
-
-toConstantCase('camelCase')   // "CAMEL_CASE"
-toConstantCase('snake_case')  // "SNAKE_CASE"
-toConstantCase('dot.case')    // "DOT_CASE"
-toConstantCase('weird[case')  // "WEIRD_CASE"
-```
-
-**（2）代码**
-
-```js
-var snake = require('to-snake-case') // 转为下划线连接的形式
-
-// var toSpace = require('to-space-case')
-// module.exports = toSnakeCase
-// function toSnakeCase(string) {
-//   return toSpace(string).replace(/\s/g, '_')
-// }
-
-function toConstantCase(string) {
-  return snake(string).toUpperCase()
-}
-module.exports = toConstantCase
-```
-
-## to-dot-case
-**（1）功能与示例**
-
-```js
-var toDotCase = require('to-dot-case')
-
-toDotCase("snake_case")  // "snake.case"
-toDotCase('camelCase')   // "camel.case"
-toDotCase('space case')  // "space.case"
-toDotCase('slug-case')   // "slug.case"
-toDotCase("PascalCase")  // "pascal.case"
-toDotCase('weird[case')  // "weird.case"
-```
-
-**（2）代码**
-
-```js
-var space = require('to-space-case') // 转化为空格分隔的形式
-
-// var clean = require('to-no-case')
-// function toSpaceCase(string) {
-//   return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
-//     return match ? ' ' + match : ''
-//   }).trim()
-// }
-// module.exports = toSpaceCase
-
-function toDotCase(string) {
-  return space(string).replace(/\s/g, '.')
-}
-module.exports = toDotCase
 ```
 
 ## to-no-case
@@ -987,13 +968,14 @@ function toNoCase(string) {
 
 // 反分隔符——将分隔符转化为空格
 function unseparate(string) {
+  // 匹配分隔符——大写字母、下划线、点、$符号
   const separatorSplitter = /[\W_]+(.|$)/g
   return string.replace(separatorSplitter, function (m, next) {
     return next ? ' ' + next : ''
   })
 }
 
-// 反驼峰——将大写全部转化为小写
+// 反驼峰——大写字母前面加空格，大写字母转小写
 function uncamelize(string) {
   const camelSplitter = /(.)([A-Z]+)/g
   return string.replace(camelSplitter, function (m, previous, uppers) {
@@ -1002,6 +984,167 @@ function uncamelize(string) {
 }
 
 module.exports = toNoCase
+```
+
+## to-space-case
+**（1）功能与示例**
+
+将其他case形式转化为空格space分隔的形式
+
+```js
+var toSpaceCase = require('to-space-case')
+
+toSpaceCase('camelCase')             // "camel case"
+toSpaceCase('snake_case')            // "snake case"
+toSpaceCase('dot.case')              // "dot case"
+toSpaceCase('-RAnDom -jUNk$__loL!')  // "random junk lol"
+```
+
+**（2）代码**
+
+```js
+var clean = require('to-no-case')
+
+function toSpaceCase(string) {
+  // 匹配大写字母、下划线、点、$，匹配到后将其前面加空格
+  return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
+    return match ? ' ' + match : ''
+  }).trim()
+}
+module.exports = toSpaceCase
+```
+
+## to-camel-case
+**（1）功能与示例**
+
+其他形式（下划线、点、括号、空格等）转驼峰
+
+```js
+var toCamelCase = require('to-camel-case')
+
+toCamelCase('space case')  // "spaceCase"
+toCamelCase('snake_case')  // "snakeCase"
+toCamelCase('dot.case')    // "dotCase"
+toCamelCase('weird[case')  // "weirdCase"
+```
+
+**（2）代码**
+
+```js
+var space = require('to-space-case') // 将字符串变为空格分隔形式（如下划线、点等）
+
+function toCamelCase(string) {
+  // 正则匹配字符串的空格，将空格后的字母变为大写
+  return space(string).replace(/\s(\w)/g, function (matches, letter) {
+    return letter.toUpperCase()
+  })
+}
+module.exports = toCamelCase
+```
+
+## to-capital-case
+**（1）功能与示例**
+
+字符串改为大写单词开头的形式
+
+```js
+var toCapitalCase = require('to-capital-case')
+
+toCapitalCase('camelCase')        // "Camel Case"
+toCapitalCase('space case')       // "Space Case"
+toCapitalCase('snake_case')       // "Snake Case"
+toCapitalCase('dot.case')         // "Dot Case"
+toCapitalCase('some*weird[case')  // "Some Weird Case"
+```
+
+**（2）代码**
+
+```js
+var space = require('to-space-case')
+
+// toCapitalCase('camelCase')        // "Camel Case"
+function toCapitalCase(string) {
+  return space(string).replace(/(^|\s)(\w)/g, function (matches, previous, letter) {
+    return previous + letter.toUpperCase()
+  })
+}
+```
+
+## to-snake-case
+**（1）功能与示例**
+
+转化为下划线分隔的形式
+
+```js
+var toSnakeCase = require('to-snake-case')
+
+toSnakeCase('camelCase')   // "camel_case"
+toSnakeCase('space case')  // "space_case"
+toSnakeCase('dot.case')    // "dot_case"
+toSnakeCase('weird[case')  // "weird_case"
+```
+
+**（2）代码**
+
+```js
+var toSpace = require('to-space-case') // 转化为空格分隔的形式
+
+function toSnakeCase(string) {
+  // 将空格全部转化为下划线
+  return toSpace(string).replace(/\s/g, '_')
+}
+module.exports = toSnakeCase
+```
+
+## to-constant-case
+**（1）功能与示例**
+
+变成下划线连接全部大写的常量形式
+
+```js
+var toConstantCase = require('to-constant-case')
+
+toConstantCase('camelCase')   // "CAMEL_CASE"
+toConstantCase('snake_case')  // "SNAKE_CASE"
+toConstantCase('dot.case')    // "DOT_CASE"
+toConstantCase('weird[case')  // "WEIRD_CASE"
+```
+
+**（2）代码**
+
+```js
+var snake = require('to-snake-case') // 转为下划线连接的形式
+
+function toConstantCase(string) {
+  return snake(string).toUpperCase()
+}
+module.exports = toConstantCase
+```
+
+## to-dot-case
+**（1）功能与示例**
+
+```js
+var toDotCase = require('to-dot-case')
+
+toDotCase("snake_case")  // "snake.case"
+toDotCase('camelCase')   // "camel.case"
+toDotCase('space case')  // "space.case"
+toDotCase('slug-case')   // "slug.case"
+toDotCase("PascalCase")  // "pascal.case"
+toDotCase('weird[case')  // "weird.case"
+```
+
+**（2）代码**
+
+```js
+var space = require('to-space-case') // 转化为空格分隔的形式
+
+function toDotCase(string) {
+  return space(string).replace(/\s/g, '.')
+}
+
+module.exports = toDotCase
 ```
 
 ## to-pascal-case
@@ -1032,6 +1175,77 @@ function toPascalCase(string) {
 module.exports = toPascalCase
 ```
 
+## decamelize
+**（1）功能与示例**
+
+将驼峰转为下划线
+
+```js
+const decamelize = require('decamelize');
+
+decamelize('unicornRainbow'); //=> 'unicorn_rainbow'
+decamelize('unicornRainbow', {separator: '-'}); //=> 'unicorn-rainbow'
+decamelize('testGUILabel', {preserveConsecutiveUppercase: true}); //=> 'test_GUI_label'
+decamelize('testGUILabel', {preserveConsecutiveUppercase: false}); //=> 'test_gui_label'
+```
+
+**（2）代码**
+
+```js
+
+const handlePreserveConsecutiveUppercase = (decamelized, separator) => {
+  decamelized = decamelized.replace(
+    /((?<![\p{Uppercase_Letter}\d])[\p{Uppercase_Letter}\d](?![\p{Uppercase_Letter}\d]))/gu,
+    $0 => {
+      return $0.toLowerCase();
+    }
+  );
+
+  return decamelized.replace(
+    /(\p{Uppercase_Letter}+)(\p{Uppercase_Letter}\p{Lowercase_Letter}+)/gu,
+    (_, $1, $2) => {
+      return $1 + separator + $2.toLowerCase();
+    }
+  );
+};
+
+module.exports = (
+  text,
+  {
+    separator = '_',
+    preserveConsecutiveUppercase = false
+  } = {}
+) => {
+  if (!(typeof text === 'string' && typeof separator === 'string')) {
+    throw new TypeError(
+      'The `text` and `separator` arguments should be of type `string`'
+    );
+  }
+
+  if (text.length < 2) {
+    return preserveConsecutiveUppercase ? text : text.toLowerCase();
+  }
+
+  const replacement = `$1${separator}$2`;
+
+  const decamelized = text.replace(
+    /([\p{Lowercase_Letter}\d])(\p{Uppercase_Letter})/gu,
+    replacement
+  );
+
+  if (preserveConsecutiveUppercase) {
+    return handlePreserveConsecutiveUppercase(decamelized, separator);
+  }
+
+  return decamelized
+    .replace(
+      /(\p{Uppercase_Letter}+)(\p{Uppercase_Letter}\p{Lowercase_Letter}+)/gu,
+      replacement
+    )
+    .toLowerCase();
+};
+```
+
 ## to-sentence-case
 **（1）功能与示例**
 
@@ -1056,60 +1270,6 @@ function toSentenceCase(string) {
 
 module.exports = toSentenceCase
 ```
-
-## to-snake-case
-**（1）功能与示例**
-
-转化为下划线分隔的形式
-
-```js
-var toSnakeCase = require('to-snake-case')
-
-toSnakeCase('camelCase')   // "camel_case"
-toSnakeCase('space case')  // "space_case"
-toSnakeCase('dot.case')    // "dot_case"
-toSnakeCase('weird[case')  // "weird_case"
-```
-
-**（2）代码**
-
-```js
-var toSpace = require('to-space-case') // 转化为空格分隔的形式
-
-function toSnakeCase(string) {
-  // 将空格全部转化为下划线
-  return toSpace(string).replace(/\s/g, '_')
-}
-module.exports = toSnakeCase
-```
-
-## to-space-case
-**（1）功能与示例**
-
-将其他case形式转化为空格space分隔的形式
-
-```js
-var toSpaceCase = require('to-space-case')
-
-toSpaceCase('camelCase')             // "camel case"
-toSpaceCase('snake_case')            // "snake case"
-toSpaceCase('dot.case')              // "dot case"
-toSpaceCase('-RAnDom -jUNk$__loL!')  // "random junk lol"
-```
-
-**（2）代码**
-
-```js
-var clean = require('to-no-case')
-
-function toSpaceCase(string) {
-  return clean(string).replace(/[\W_]+(.|$)/g, function (matches, match) {
-    return match ? ' ' + match : ''
-  }).trim()
-}
-module.exports = toSpaceCase
-```
-
 ## to-title-case
 **（1）功能与示例**
 
@@ -1143,39 +1303,6 @@ function toTitleCase(string) {
 }
 module.exports = toTitleCase
 ```
-
-## node-slug
-**（1）功能与示例**
-
-字符解析
-
-```js
-var slug = require('slug')
-var print = console.log.bind(console, '>')
-
-print(slug('i ♥ unicode'))
-// > i-love-unicode
-
-print(slug('unicode ♥ is ☢')) // yes!
-// > unicode-love-is-radioactive
-
-print(slug('i ♥ unicode', '_')) // If you prefer something else then `-` as seperator
-// > i_love_unicode
-
-slug.charmap['♥'] = 'freaking love' // change default charmap or use option {charmap:{…}} as 2. argument
-print(slug('I ♥ UNICODE'))
-// > I-freaking-love-UNICODE
-
-print(slug('☏-Number', {lower: true})) // If you prefer lower case
-// > telephone-number
-
-print(slug('i <3 unicode'))
-// > i-love-unicode
-```
-
-**（2）代码**
-
-[代码](https://github.com/dodo/node-slug/blob/master/slug.js)
 
 ## rtrim
 **（1）功能与示例**
@@ -1248,186 +1375,3 @@ str['5:1:-2'];  	// '64'
 **（2）代码**
 
 [代码](https://github.com/hustcc/slice.js/blob/master/src/index.js)
-
----
-
-关于时间类的库，推荐看[dayjs](https://github.com/iamkun/dayjs/)、[moment](https://github.com/moment/moment)
-## pretty-ms
-**（1）功能与示例**
-
-1. 支持将时间戳转化为天、小时、分钟、秒、毫秒等格式
-2. 支持计算时间范围，如 new Date(2014, 0, 1, 10, 40) - new Date(2014, 0, 1, 10, 5)
-3. 自定义option
-- compact
-- verbose 单位全称展示
-- colonNotation 时钟表示法
-- formatSubMilliseconds 支持毫秒以下的表示
-
-```js
-const prettyMilliseconds = require('pretty-ms');
-
-prettyMilliseconds(1337000000);
-//=> '15d 11h 23m 20s'
-
-prettyMilliseconds(1337);
-//=> '1.3s'
-
-prettyMilliseconds(133);
-//=> '133ms'
-
-// `compact` option
-prettyMilliseconds(1337, {compact: true});
-//=> '1s'
-
-// `verbose` option
-prettyMilliseconds(1335669000, {verbose: true});
-//=> '15 days 11 hours 1 minute 9 seconds'
-
-// `colonNotation` option
-prettyMilliseconds(95500, {colonNotation: true});
-//=> '1:35.5'
-
-// `formatSubMilliseconds` option
-prettyMilliseconds(100.400080, {formatSubMilliseconds: true})
-//=> '100ms 400µs 80ns'
-
-// Can be useful for time durations
-prettyMilliseconds(new Date(2014, 0, 1, 10, 40) - new Date(2014, 0, 1, 10, 5))
-//=> '35m'
-```
-
-**（2）代码**
-
-```js
-const parseMilliseconds = require('parse-ms');
-
-// 负数形式展示，如果数量大于1，则单词尾添加s
-const pluralize = (word, count) => count === 1 ? word : `${word}s`;
-
-const SECOND_ROUNDING_EPSILON = 0.0000001;
-
-module.exports = (milliseconds, options = {}) => {
-  // 传入的值是无穷大，则直接抛错
-	if (!Number.isFinite(milliseconds)) {
-		throw new TypeError('Expected a finite number');
-	}
-
-  // 时钟表示法，如'1:35.5'
-	if (options.colonNotation) {
-		options.compact = false;
-		options.formatSubMilliseconds = false;
-		options.separateMilliseconds = false;
-		options.verbose = false;
-	}
-
-  // 整数表示法
-	if (options.compact) {
-		options.secondsDecimalDigits = 0;
-		options.millisecondsDecimalDigits = 0;
-	}
-
-	const result = [];
-
-  // 保留几位小数
-	const floorDecimals = (value, decimalDigits) => {
-		const flooredInterimValue = Math.floor((value * (10 ** decimalDigits)) + SECOND_ROUNDING_EPSILON);
-		const flooredValue = Math.round(flooredInterimValue) / (10 ** decimalDigits);
-		return flooredValue.toFixed(decimalDigits);
-	};
-
-	const add = (value, long, short, valueString) => {
-		if ((result.length === 0 || !options.colonNotation) && value === 0 && !(options.colonNotation && short === 'm')) {
-			return;
-		}
-
-		valueString = (valueString || value || '0').toString();
-		let prefix;
-		let suffix;
-
-    // 时钟表示法
-		if (options.colonNotation) {
-			prefix = result.length > 0 ? ':' : '';
-			suffix = '';
-			const wholeDigits = valueString.includes('.') ? valueString.split('.')[0].length : valueString.length;
-			const minLength = result.length > 0 ? 2 : 1;
-			valueString = '0'.repeat(Math.max(0, minLength - wholeDigits)) + valueString;
-		} else {
-			prefix = '';
-			suffix = options.verbose ? ' ' + pluralize(long, value) : short;
-		}
-
-		result.push(prefix + valueString + suffix);
-	};
-
-	const parsed = parseMilliseconds(milliseconds);
-
-	add(Math.trunc(parsed.days / 365), 'year', 'y');
-	add(parsed.days % 365, 'day', 'd');
-	add(parsed.hours, 'hour', 'h');
-	add(parsed.minutes, 'minute', 'm');
-
-	if (
-		options.separateMilliseconds ||
-		options.formatSubMilliseconds ||
-		(!options.colonNotation && milliseconds < 1000)
-	) {
-		add(parsed.seconds, 'second', 's');
-		if (options.formatSubMilliseconds) {
-			add(parsed.milliseconds, 'millisecond', 'ms');
-			add(parsed.microseconds, 'microsecond', 'µs');
-			add(parsed.nanoseconds, 'nanosecond', 'ns');
-		} else {
-			const millisecondsAndBelow =
-				parsed.milliseconds +
-				(parsed.microseconds / 1000) +
-				(parsed.nanoseconds / 1e6);
-
-			const millisecondsDecimalDigits =
-				typeof options.millisecondsDecimalDigits === 'number' ?
-					options.millisecondsDecimalDigits :
-					0;
-
-			const roundedMiliseconds = millisecondsAndBelow >= 1 ?
-				Math.round(millisecondsAndBelow) :
-				Math.ceil(millisecondsAndBelow);
-
-			const millisecondsString = millisecondsDecimalDigits ?
-				millisecondsAndBelow.toFixed(millisecondsDecimalDigits) :
-				roundedMiliseconds;
-
-			add(
-				Number.parseFloat(millisecondsString, 10),
-				'millisecond',
-				'ms',
-				millisecondsString
-			);
-		}
-	} else {
-		const seconds = (milliseconds / 1000) % 60;
-		const secondsDecimalDigits =
-			typeof options.secondsDecimalDigits === 'number' ?
-				options.secondsDecimalDigits :
-				1;
-		const secondsFixed = floorDecimals(seconds, secondsDecimalDigits);
-		const secondsString = options.keepDecimalsOnWholeSeconds ?
-			secondsFixed :
-			secondsFixed.replace(/\.0+$/, '');
-		add(Number.parseFloat(secondsString, 10), 'second', 's', secondsString);
-	}
-
-	if (result.length === 0) {
-		return '0' + (options.verbose ? ' milliseconds' : 'ms');
-	}
-
-	if (options.compact) {
-		return result[0];
-	}
-
-	if (typeof options.unitCount === 'number') {
-		const separator = options.colonNotation ? '' : ' ';
-		return result.slice(0, Math.max(options.unitCount, 1)).join(separator);
-	}
-
-	return options.colonNotation ? result.join('') : result.join(' ');
-};
-```
