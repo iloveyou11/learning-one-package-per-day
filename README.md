@@ -71,6 +71,7 @@ console.log(b)   // 5
 
 ## is-sorted
 **（1）功能与示例**
+
 判断数组是否已经排好序，排序函数可以自定义（如不定义，默认是升序排序）
 
 ```js
@@ -260,7 +261,7 @@ function flat(arr, res) {
 }
 ```
 
-【数组扁平化的常用方法汇总】
+数组扁平化的常用方法汇总：
 
 **方法1：使用flat函数**
 
@@ -849,45 +850,6 @@ module.exports = function chunks(arr, size) {
 };
 ```
 
-## group-array
-**（1）功能与示例**
-
-按照给定的object key值，去对arr中的元素做分类
-
-```js
-var arr = [
-  {tag: 'one', content: 'A'},
-  {tag: 'one', content: 'B'},
-  {tag: 'two', content: 'C'},
-  {tag: 'two', content: 'D'},
-  {tag: 'three', content: 'E'},
-  {tag: 'three', content: 'F'}
-];
-
-groupArray(arr, 'tag');
-
-// {
-//   one: [
-//     {tag: 'one', content: 'A'},
-//     {tag: 'one', content: 'B'}
-//   ],
-//   two: [
-//     {tag: 'two', content: 'C'},
-//     {tag: 'two', content: 'D'}
-//   ],
-//   three: [
-//     {tag: 'three', content: 'E'},
-//     {tag: 'three', content: 'F'}
-//   ]
-// }
-```
-
-**（2）代码**
-
-[代码](https://github.com/doowb/group-array/blob/master/index.js)
-
----
-
 ## pad-left
 **（1）功能与示例**
 
@@ -1375,3 +1337,40 @@ str['5:1:-2'];  	// '64'
 **（2）代码**
 
 [代码](https://github.com/hustcc/slice.js/blob/master/src/index.js)
+
+## group-array
+**（1）功能与示例**
+
+按照给定的object key值，去对arr中的元素做分类
+
+```js
+var arr = [
+  {tag: 'one', content: 'A'},
+  {tag: 'one', content: 'B'},
+  {tag: 'two', content: 'C'},
+  {tag: 'two', content: 'D'},
+  {tag: 'three', content: 'E'},
+  {tag: 'three', content: 'F'}
+];
+
+groupArray(arr, 'tag');
+
+// {
+//   one: [
+//     {tag: 'one', content: 'A'},
+//     {tag: 'one', content: 'B'}
+//   ],
+//   two: [
+//     {tag: 'two', content: 'C'},
+//     {tag: 'two', content: 'D'}
+//   ],
+//   three: [
+//     {tag: 'three', content: 'E'},
+//     {tag: 'three', content: 'F'}
+//   ]
+// }
+```
+
+**（2）代码**
+
+[代码](https://github.com/doowb/group-array/blob/master/index.js)
