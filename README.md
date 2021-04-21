@@ -1765,3 +1765,172 @@ module.exports = function (key, object) {
   return hasKeyDeep(key, object);
 };
 ```
+
+## deep-assign
+**（1）功能与示例**
+
+将多个对象合并成一个对象，支持多层级
+
+```js
+var deepAssign = require('deep-assign');
+deepAssign({a: {b: 0}}, {a: {b: 1, c: 2}}, {a: {c: 3}});
+//=> {a: {b: 1, c: 3}}
+```
+
+**（2）代码**
+
+```js
+var isObj = require('is-obj');
+
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+var propIsEnumerable = Object.prototype.propertyIsEnumerable;
+
+// 辅助函数——转化为object
+function toObject(val) {
+	if (val === null || val === undefined) {
+		throw new TypeError('Cannot convert undefined or null to object');
+	}
+
+	return Object(val);
+}
+
+// 将from的key值赋值到to
+function assignKey(to, from, key) {
+	var val = from[key];
+
+  // 容错处理
+	if (val === undefined || val === null) {
+		return;
+	}
+
+	if (hasOwnProperty.call(to, key)) {
+		if (to[key] === undefined || to[key] === null) {
+			throw new TypeError('Cannot convert undefined or null to object (' + key + ')');
+		}
+	}
+
+	if (!hasOwnProperty.call(to, key) || !isObj(val)) {
+    // 基础类型直接赋值
+		to[key] = val;
+	} else {
+    // object类型则使用assign函数赋值
+		to[key] = assign(Object(to[key]), from[key]);
+	}
+}
+
+function assign(to, from) {
+  // 缺省值处理
+	if (to === from) {
+		return to;
+	}
+
+	from = Object(from);
+
+  // 遍历from，将from中的全部key复制到to
+	for (var key in from) {
+		if (hasOwnProperty.call(from, key)) {
+			assignKey(to, from, key);
+		}
+	}
+
+  // 如果from中有symbol类型，则复制symbol类型
+	if (Object.getOwnPropertySymbols) {
+		var symbols = Object.getOwnPropertySymbols(from);
+
+		for (var i = 0; i < symbols.length; i++) {
+			if (propIsEnumerable.call(from, symbols[i])) {
+				assignKey(to, from, symbols[i]);
+			}
+		}
+	}
+
+	return to;
+}
+
+module.exports = function deepAssign(target) {
+  // 取传入的第一个值，将其转化为object
+	target = toObject(target);
+
+  // 从第二个值往最后的值进行遍历，依次赋给第一个object
+	for (var s = 1; s < arguments.length; s++) {
+		assign(target, arguments[s]);
+	}
+
+  // 返回第一个object
+	return target;
+};
+```
+
+## is-empty-object
+**（1）功能与示例**
+
+```js
+var isEmptyObject = require('is-empty-object')
+
+isEmptyObject({})         // => true
+isEmptyObject({ one: 1 }) // => false
+isEmptyObject([])         // => false
+```
+
+**（2）代码**
+
+```js
+function isEmptyObject(obj) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj))
+    return false
+  return !Object.keys(obj).length
+}
+
+module.exports = isEmptyObject
+```
+
+## node-merge-objects 
+**（1）功能与示例**
+
+```js
+var merge = require('merge-objects');
+
+var object1 = {a: 1, b: [2, 3]};
+var object2 = {b: [4, 5], c: 6};
+
+var result = merge(object1, object2);
+console.log(result); //logs {a: 1, b: [2, 3, 4, 5], c: 6}
+```
+
+**（2）代码**
+
+```js
+var mergeObjects;
+ mergeObjects = function(object1, object2) {
+   var key;
+ 
+   if (typeof object1 !== 'object') {
+     if (typeof object2 !== 'object') {
+       return [object1, object2];
+     }
+     return object2.concat(object1);
+   }
+   if (typeof object2 !== 'object') {
+     return object1.concat(object2);
+   }
+ 
+  //  如果object1、object2均是对象类型
+   for (key in object2) {
+     
+    //  如果两者都是数组
+     if ((Array.isArray(object1[key])) && (Array.isArray(object2[key]))) {
+       object1[key] = object1[key].concat(object2[key]);
+
+      //  如果两者都是纯object对象
+     } else if (typeof object1[key] === 'object' && typeof object2[key] === 'object') {
+       object1[key] = mergeObjects(object1[key], object2[key]);
+
+     } else {
+       object1[key] = object2[key];
+     }
+   }
+   return object1;
+ };
+ 
+ module.exports = mergeObjects;
+ ```
