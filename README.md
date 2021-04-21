@@ -31,7 +31,7 @@ npm publish // 发布
 
 ---
 
-首先补充一下位运算符的妙用，以下代码可能会涉及：
+**首先补充一下位运算符的妙用，以下代码可能会涉及：**
 
 1. 使用`&`运算符判断一个数的奇偶
 
@@ -1374,3 +1374,394 @@ groupArray(arr, 'tag');
 **（2）代码**
 
 [代码](https://github.com/doowb/group-array/blob/master/index.js)
+
+## map-obj
+**（1）功能与示例**
+
+通过函数去变换一个object，如交换key-value位置、key全部转小写……
+
+```js
+const mapObject = require('map-obj');
+
+const newObject = mapObject({foo: 'bar'}, (key, value) => [value, key]);//=> {bar: 'foo'}
+const newObject = mapObject({FOO: true, bAr: {bAz: true}}, (key, value) => [key.toLowerCase(), value]);//=> {foo: true, bar: {bAz: true}
+const newObject = mapObject({FOO: true, bAr: {bAz: true}}, (key, value) => [key.toLowerCase(), value], {deep: true});//=> {foo: true, bar: {baz: true}}
+```
+
+**（2）代码**
+
+```js
+// 判断是否是对象，广义的对象（包括object、function、RegExp、Date等）
+const isObject = value => typeof value === 'object' && value !== null;
+
+// 判断是否是对象，狭义的对象（仅仅是object类型）
+const isObjectCustom = value =>
+	isObject(value) &&
+	!(value instanceof RegExp) &&
+	!(value instanceof Error) &&
+	!(value instanceof Date);
+
+  // 核心函数
+const mapObject = (object, mapper, options, isSeen = new WeakMap()) => {
+	options = {
+		deep: false,
+		target: {},
+		...options
+	};
+
+  // 注意这里的isSeen是一个缓存，存储之前执行的结果
+	if (isSeen.has(object)) {
+		return isSeen.get(object);
+	}
+	isSeen.set(object, options.target);
+
+	const {target} = options;
+	delete options.target;
+
+  // 对数组每个元素都进行函数变换（需要判断元素是否是普通object对象）
+	const mapArray = array => array.map(element => isObjectCustom(element) ? mapObject(element, mapper, options, isSeen) : element);
+
+  // 如果传入的是array，则针对每个元素分别作map
+	if (Array.isArray(object)) {
+		return mapArray(object);
+	}
+
+  // 遍历object的key、value
+	for (const [key, value] of Object.entries(object)) {
+    // mapper是传入的变换函数，这里调用mapper拿到了key、value新值
+		let [newKey, newValue, {shouldRecurse = true} = {}] = mapper(key, value, object);
+
+		if (newKey === '__proto__') {
+			continue;
+		}
+
+    // 这里判断是否需要深度遍历object（即所有层级都要进行map操作）
+		if (options.deep && shouldRecurse && isObjectCustom(newValue)) {
+      // 注意这里进行了递归
+			newValue = Array.isArray(newValue) ?
+				mapArray(newValue) :
+				mapObject(newValue, mapper, options, isSeen);
+		}
+
+    // 用map函数赋予新值
+		target[newKey] = newValue;
+	}
+
+  // 返回经过函数变换后的新对象
+	return target;
+};
+
+/**
+ * 
+ * @param {*} object 传入的对象
+ * @param {*} mapper 变换函数
+ * @param {*} options 传入的options，如deep:true
+ * @returns 
+ */
+module.exports = (object, mapper, options) => {
+  // 如果不是object，直接抛错
+	if (!isObject(object)) {
+		throw new TypeError(`Expected an object, got \`${object}\` (${typeof object})`);
+	}
+
+	return mapObject(object, mapper, options);
+};
+```
+
+## filter-obj
+**（1）功能与示例**
+
+按照指定的过滤函数或key值数组，过滤object中的内容
+
+```js
+const filterObject = require('filter-obj');
+
+const object = {
+	foo: true,
+	bar: false
+};
+
+const newObject = filterObject(object, (key, value) => value === true); //=> {foo: true}
+const newObject2 = filterObject(object, ['bar']); //=> {bar: false}
+```
+
+**（2）代码**
+
+```js
+/**
+ * 
+ * @param {*} object 传入的对象
+ * @param {*} predicate 传入的过滤条件，可以是函数如(key, value) => value === true)，可以是key值数组如['bar']
+ * @returns 
+ */
+module.exports = (object, predicate) => {
+	const result = {};
+
+  // 这里判断传入的predicate是否是key值数组
+	const isArray = Array.isArray(predicate);
+
+  // 遍历object的key-value
+	for (const [key, value] of Object.entries(object)) {
+    // 如果predicate是数组，则取object中key在数组中的内容
+    // 如果不是数组（是函数），则直接用函数表达式去判断是否取用内容
+		if (isArray ? predicate.includes(key) : predicate(key, value, object)) {
+
+      // 满足了以上条件，说明这对key、value是需要的，因此绑定在result中
+      // 这里为什么要用Object.defineProperty而不直接用result[key]=value，原因不太清楚
+			Object.defineProperty(result, key, {
+				value,
+				writable: true,
+				enumerable: true,
+				configurable: true
+			});
+		}
+	}
+
+	return result;
+};
+```
+
+## object-values
+**（1）功能与示例**
+
+取出object中全部的value，类似于Object.values(xxx)
+
+```js
+const objectValues = require('object-values');
+objectValues({foo: 0, bar: 1}); //=> [0, 1]
+```
+
+**（2）代码**
+
+```js
+// 这里直接使用了Object.keys()函数，根据key依次去取value
+module.exports = object => Object.keys(object).map(i => object[i]);
+
+// 有个更简便的方法，直接可以通过Object.values()方法取
+module.exports = object => Object.values(object)
+```
+
+## object-pairs
+**（1）功能与示例**
+
+将object转化为key、value组成的数组
+
+```js
+const pairs = require('object-pairs')
+pairs({ foo: 2, bar: 4 })
+// [ [ 'foo', 2 ],
+//   [ 'bar', 4 ] ]
+```
+
+**（2）代码**
+
+```js
+module.exports = function (obj) {
+  // 取出全部的key
+  // 对全部的keys作map：keys.map(key=>[key, obj[key]])
+  return Object.keys(obj).map(function (key) {
+    return [key, obj[key]];
+  });
+};
+```
+
+## zipmap
+**（1）功能与示例**
+
+通过输入构造object对象
+
+有以下三种调用方式：
+
+```js
+const zipmap = require('zipmap');
+
+
+// 方式1：传入的是两个数组
+const keys = ['a', 'b', 'c'];
+const vals = [1, 2, 3];
+const map = zipmap(keys, vals); // { a: 1, b: 2, c: 3 }
+
+// 方式2：传入的是数组，元素是key-value的object
+const objs = [
+  { key: 'foo', value: 'bar' },
+  { key: 'hi', value: 'bye' },
+];
+const map = zipmap(objs);
+// {
+//   foo: 'bar',
+//   hi: 'bye'
+// }
+
+// 方式3：传入的是数组，元素也是数组
+const pairs = [
+  ['foo', 'bar'],
+  ['hi', 'bye']
+];
+const map = zipmap(pairs);
+// {
+//   foo: 'bar',
+//   hi: 'bye'
+// }
+```
+
+**（2）代码**
+
+```js
+var toString = Function.call.bind(Object.prototype.toString);
+
+// 判断是否是普通object对象
+function isObj(o) {
+  return toString(o) === '[object Object]';
+}
+
+  // keys = ['a', 'b', 'c'];
+  // vals = [1, 2, 3];
+function _zipmap(keys, vals) {
+  // 取长度更短的数组，避免配对不成功的请
+  var shorter = keys.length > vals.length ? vals : keys;
+
+  // 同样采用reduce解决
+  return shorter.reduce(function (map, val, idx) {
+    map[keys[idx]] = vals[idx];
+    return map;
+  }, {});
+
+}
+
+// [
+//   ['foo', 'bar'],
+//   ['hi', 'bye']
+// ]
+function zipmapPairs(pairs) {
+  // 直接使用reduce构造object
+  return pairs.reduce(function (map, pair) {
+    map[pair[0]] = pair[1];
+    return map;
+  }, {});
+}
+
+    // [
+    //   { key: 'foo', value: 'bar' },
+    //   { key: 'hi', value: 'bye' },
+    // ]
+function zipmapObj(objs) {
+  // 同样也是直接使用reduce构造object
+  return objs.reduce(function (map, o) {
+    map[o.key] = o.value;
+    return map;
+  }, {});
+}
+
+module.exports = function zipmap(keys, vals) {
+  // 如果没有传第二个参数
+  if (!vals) {
+    // 第一个参数数组长度为0
+    if (Array.isArray(keys) && !keys.length) return {};
+    // 第一个参数是二维数组，元素为array
+    // [
+    //   ['foo', 'bar'],
+    //   ['hi', 'bye']
+    // ]
+    if (Array.isArray(keys[0])) return zipmapPairs(keys);
+
+    // 第一个参数是二维数组，元素为object
+    // [
+    //   { key: 'foo', value: 'bar' },
+    //   { key: 'hi', value: 'bye' },
+    // ]
+    if (isObj(keys[0])) return zipmapObj(keys);
+
+    // 不符合以上情形，抛出错误
+    throw new TypeError('Expected vals to be an array');
+  }
+
+  // 第二个参数有值
+  // keys = ['a', 'b', 'c'];
+  // vals = [1, 2, 3];
+  return _zipmap(keys, vals);
+};
+```
+
+## just-pluck
+**（1）功能与示例**
+
+根据key取每个对象的value值，构成数组返回
+
+```js
+var pluck = require('just-pluck')
+var pokemon = [{name: 'pikachu'}, {name: 'meowth'}, {name: 'mr mime'}]
+console.log(pluck('name', pokemon)) // ['pikachu', 'meowth', 'mr mime']
+```
+
+**（2）代码**
+
+```js
+var lookup = require('dotpather')
+module.exports = function pluck (key, arr) {
+  // resolve是一个函数，传入object，可以拿到对应key的value值
+  var resolve = lookup(key)
+
+  // 结果数组
+  var result = []
+  arr = [].slice.call(arr)
+
+  // 遍历arr
+  for (var i = 0, l = arr.length; i < l; ++i) {
+    result.push(resolve(arr[i]))
+  }
+
+  return result
+}
+```
+
+## has-key-deep
+**（1）功能与示例**
+
+判断对象是否具有某个key（支持深层次）
+
+```js
+console.log(qw('a.b.c', { a: { b: { c: 1 } } })) // => true
+console.log(qw(['a', 'b', 'c'], { a: { b: { c: 1 } } })) // => true
+console.log(qw('a.b.c.d', { a: { b: { c: 1 } } })) // => false
+console.log(qw('a.c', { a: { b: { c: 1 } } })) // => false
+console.log(qw('a', {})) // => false
+```
+
+**（2）代码**
+
+```js
+/**
+ * 
+ * @param {*} key 字符串：'a.b.c.d'、数组：['a', 'b', 'c']
+ * @param {*} object { a: { b: { c: 1 } } }
+ * @returns 
+ */
+function hasKeyDeep(key, object) {
+  // 如果key是字符串，则将其变为数组
+  if (typeof key === 'string') {
+    return hasKeyDeep(key.split('.'), object);
+  }
+
+  // 处理边界情况
+  if (key.length === 0) {
+    return true;
+  }
+  if (!object) {
+    return false;
+  }
+  if (key.length === 1) {
+    return object.hasOwnProperty(key[0]);
+  }
+
+  // 如果key有多个，则进行递归搜索
+  if (object.hasOwnProperty(key[0])) {
+    return hasKeyDeep(key.slice(1), object[key[0]]);
+  }
+
+  return false;
+}
+
+module.exports = function (key, object) {
+  return hasKeyDeep(key, object);
+};
+```
